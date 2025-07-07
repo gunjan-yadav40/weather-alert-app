@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🌤️ Smart Weather App</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- 🌙 Theme Toggle -->
+  <button id="toggleDark" class="toggle-btn">🌙 Dark Mode</button>
+
+  <div class="container">
+    <h1>🌦️ Smart Weather App</h1>
+    <input type="text" id="cityInput" placeholder="Enter city name" />
+    <button id="getWeatherBtn">Get Weather</button>
+
+    <div id="alerts" class="alerts-box"></div>
+    <div class="weather-card" id="result"></div>
+  </div>
+
+ 
+
+
+
+
+    <script>
+      const toggleBtn = document.getElementById("toggleDark");
+      toggleBtn.addEventListener("click", () => {
+        document.body.classList.toggle("dark");
+        toggleBtn.innerText = document.body.classList.contains("dark")
+          ? "☀️ Light Mode"
+          : "🌙 Dark Mode";
+      });
+
+      const getWeatherBtn = document.getElementById("getWeatherBtn");
+      const cityInput = document.getElementById("cityInput");
+      const resultDiv = document.getElementById("result");
+
+      // ✅ Moved outside so it's reusable
+      function showSmartAlerts(data) {
+        const alertsDiv = document.getElementById("alerts");
+        alertsDiv.innerHTML = "";
+
+        const temp = parseFloat(data.temperature); // e.g., "41 °C" → 41
+        const wind = parseFloat(data.windSpeed); // e.g., "13 m/s" → 13
+        const rainProb = data.rainChance || 0; // Will be added in future
+
+        if (temp > 38) {
+          alertsDiv.innerHTML += `<p>🔥 <strong>Heat alert:</strong> Stay hydrated!</p>`;
+        }
+        if (wind > 10) {
+          alertsDiv.innerHTML += `<p>🌪️ <strong>High wind:</strong> Be cautious outside.</p>`;
+        }
+        if (rainProb > 50) {
+          alertsDiv.innerHTML += `<p>🌧️ <strong>Rain likely:</strong> Carry an umbrella.</p>`;
+        }
+
+        if (alertsDiv.innerHTML === "") {
+          alertsDiv.innerHTML = `<p>✅ No alerts. You're good to go!</p>`;
+        }
+      }
+
+      // 🌤️ On button click
+      getWeatherBtn.addEventListener("click", async () => {
+        const city = cityInput.value.trim();
+        if (!city) {
+          resultDiv.innerHTML = "<p>Please enter a city name.</p>";
+          return;
+        }
+
+        resultDiv.innerHTML = "⏳ Loading...";
+
+        try {
+         const res = await fetch(`http://127.0.0.1:3000/weather?city=${city}`);
+        const nearbyRainRes = await fetch(`http://127.0.0.1:3000/nearby-rain?city=${city}`);
+
+          const data = await res.json();
+
+          if (data.error) {
+            resultDiv.innerHTML = `<p class="error">❌ ${data.error}</p>`;
+          } else {
+            resultDiv.innerHTML = `
+          <h2>${data.city}</h2>
+          <p><strong>Temperature:</strong> ${data.temperature}</p>
+          <p><strong>Description:</strong> ${data.description}</p>
+          <p><strong>Humidity:</strong> ${data.humidity}</p>
+          <p><strong>Wind Speed:</strong> ${data.windSpeed}</p>
+        `;
+
+            // ✅ Call smart alert function
+            showSmartAlerts(data);
+            // Fetch nearby rain data
+            const nearbyRainRes = await fetch(
+              `http://localhost:3000/nearby-rain?city=${city}`
+            );
+            const nearbyData = await nearbyRainRes.json();
+
+            if (nearbyData.nearbyRain && nearbyData.nearbyRain.length > 0) {
+              const alertsDiv = document.getElementById("alerts");
+              alertsDiv.innerHTML += `<p>🌧️ <strong>Rain nearby in:</strong> ${nearbyData.nearbyRain.join(
+                ", "
+              )}. Be prepared!</p>`;
+            }
+          }
+        } catch (err) {
+          resultDiv.innerHTML = "<p class='error'>⚠️ Failed to fetch data</p>";
+        }
+      });
+    </script>
+  </body>
+</html>
