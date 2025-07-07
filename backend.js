@@ -3,7 +3,9 @@ import dotenv from 'dotenv';
 dotenv.config(); // ✅ this reads from `.env` in the same folder
 import express from 'express';
 import fetch from 'node-fetch';
-
+app.get("/", (req, res) => {
+  res.send("✅ Weather backend is running! Use /weather?city=yourcity");
+});
 
 
 
